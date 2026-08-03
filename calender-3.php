@@ -355,14 +355,14 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
         /* 十二生肖霧化玻璃插圖浮水印設計 */
         .month-zodiac-art {
             position: absolute;
-            right: 0px;
-            width: 80px;
-            height: 80px;
-            top: -1px;
+            right: 25px;
+            top: 20px;
+            width: 110px;
+            height: 110px;
             background: rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(107, 240, 94, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -498,7 +498,6 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
         
         <!-- 依照不同皇帝/年號動態產生 5 個獨立的下拉式選單 -->
         <div class="year-select-section">
-            
             <div>
                 <strong><?= $selected_year ?> 年 (<?= $minguo_year ?> <?= $era_name_val ?>)</strong> 
                 <span class="zodiac-badge">歲次 <?= $ganzhi_year ?></span>
@@ -527,7 +526,23 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
         <hr style="width: 80%; border: 0; border-top: 1px solid rgba(0,0,0,0.15); margin: 25px auto;">
 
         <div class="months-container">
-            <?php
+            <?php 
+            // 定義十二地支與對應十二生肖圖騰（子鼠、丑牛、寅虎、卯兔、辰龍、巳蛇、午馬、未羊、申猴、酉雞、戌狗、亥豬）
+            $zodiac_symbols = [
+                1 => '鼠', // 子
+                2 => '牛', // 丑
+                3 => '虎', // 寅
+                4 => '兔', // 卯
+                5 => '龍', // 辰
+                6 => '蛇', // 巳
+                7 => '馬', // 午
+                8 => '羊', // 未
+                9 => '猴', // 申
+                10 => '雞', // 酉
+                11 => '狗', // 戌
+                12 => '豬'  // 亥
+            ];
+
             // 根據預設系統當月份調整迴圈順序，讓當月份排在第一位顯示
             $month_keys = array_keys($calendar_data);
             $target_index = array_search($default_display_month, $month_keys);
@@ -540,20 +555,11 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
             }
 
             foreach ($display_calendar_data as $month_num => $days): 
-                // 依照月份對應四季：3-5月「春」、6-8月「夏」、9-11月「秋」、12、1、2月「冬」
-                if ($month_num >= 3 && $month_num <= 5) {
-                    $zodiac_char = '春';
-                } elseif ($month_num >= 6 && $month_num <= 8) {
-                    $zodiac_char = '夏';
-                } elseif ($month_num >= 9 && $month_num <= 11) {
-                    $zodiac_char = '秋';
-                } else {
-                    $zodiac_char = '冬';
-                }
+                $zodiac_char = isset($zodiac_symbols[$month_num]) ? $zodiac_symbols[$month_num] : '';
             ?>
                 <div class="month-box">
-                    <!-- 霧化玻璃效果的四季位置文字 -->
-                    <div class="month-zodiac-art" title="四季對應"><?= $zodiac_char ?></div>
+                    <!-- 新增有霧化玻璃效果的十二生肖月曆插圖 -->
+                    <div class="month-zodiac-art" title="十二地支生肖插圖"><?= $zodiac_char ?></div>
 
                     <h3><?= $month_num ?> 月</h3>
                     <div class="days-grid">

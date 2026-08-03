@@ -200,7 +200,7 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台灣萬年曆黃曆 - 十二生肖霧化玻璃藝術版</title>
+    <title>台灣萬年曆黃曆 - 生肖浮水印藝術版</title>
     <style>
         /* 12 生肖專屬主題配色 */
         body.theme-rat { --main-color: #4B6584; --accent-color: #ff4757; --bg-color: #f1f2f6; }
@@ -270,7 +270,7 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
 
         .main-container {
             animation: pageEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            max-width: 900px;
+            max-width: 95%;
             margin: 0 auto;
         }
 
@@ -326,12 +326,12 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
         }
 
         .months-container {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 25px;
             width: 100%;
             margin: 0 auto;
-            align-items: center;
+            align-items: start;
         }
 
         .month-box {
@@ -344,36 +344,10 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             box-sizing: border-box;
             width: 100%;
-            position: relative;
-            overflow: hidden;
         }
         .month-box:hover {
-            transform: translateY(-4px);
+            transform: translateY(-6px);
             box-shadow: 0 12px 25px rgba(0,0,0,0.12);
-        }
-
-        /* 十二生肖霧化玻璃插圖浮水印設計 */
-        .month-zodiac-art {
-            position: absolute;
-            right: 0px;
-            width: 80px;
-            height: 80px;
-            top: -1px;
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(107, 240, 94, 0.5);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3.2rem;
-            font-weight: bold;
-            color: var(--main-color);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
-            opacity: 0.85;
-            pointer-events: none;
-            z-index: 1;
         }
 
         .month-box h3 {
@@ -382,8 +356,6 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
             padding-bottom: 6px;
             color: var(--main-color);
             font-size: 1.6rem;
-            text-align: left;
-            padding-right: 130px;
             transition: color 0.5s ease, border-color 0.5s ease;
         }
 
@@ -469,22 +441,20 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
             background-color: #1f618d;
         }
 
-        /* 手機觀看響應式調整：單欄顯示、寬度 95% */
+        /* 手機觀看響應式調整：單欄顯示、寬度 95% 且格寬自動彈性調整 */
         @media screen and (max-width: 768px) {
             .main-container {
                 max-width: 95% !important;
                 width: 95% !important;
                 margin: 0 auto;
             }
-            .month-zodiac-art {
-                width: 75px;
-                height: 75px;
-                font-size: 2.2rem;
-                right: 12px;
-                top: 15px;
+            .months-container {
+                grid-template-columns: 1fr !important;
+                width: 100% !important;
             }
-            .month-box h3 {
-                padding-right: 90px;
+            .month-box {
+                width: 100% !important;
+                box-sizing: border-box;
             }
         }
     </style>
@@ -498,7 +468,6 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
         
         <!-- 依照不同皇帝/年號動態產生 5 個獨立的下拉式選單 -->
         <div class="year-select-section">
-            
             <div>
                 <strong><?= $selected_year ?> 年 (<?= $minguo_year ?> <?= $era_name_val ?>)</strong> 
                 <span class="zodiac-badge">歲次 <?= $ganzhi_year ?></span>
@@ -527,7 +496,7 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
         <hr style="width: 80%; border: 0; border-top: 1px solid rgba(0,0,0,0.15); margin: 25px auto;">
 
         <div class="months-container">
-            <?php
+            <?php 
             // 根據預設系統當月份調整迴圈順序，讓當月份排在第一位顯示
             $month_keys = array_keys($calendar_data);
             $target_index = array_search($default_display_month, $month_keys);
@@ -540,21 +509,8 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
             }
 
             foreach ($display_calendar_data as $month_num => $days): 
-                // 依照月份對應四季：3-5月「春」、6-8月「夏」、9-11月「秋」、12、1、2月「冬」
-                if ($month_num >= 3 && $month_num <= 5) {
-                    $zodiac_char = '春';
-                } elseif ($month_num >= 6 && $month_num <= 8) {
-                    $zodiac_char = '夏';
-                } elseif ($month_num >= 9 && $month_num <= 11) {
-                    $zodiac_char = '秋';
-                } else {
-                    $zodiac_char = '冬';
-                }
             ?>
                 <div class="month-box">
-                    <!-- 霧化玻璃效果的四季位置文字 -->
-                    <div class="month-zodiac-art" title="四季對應"><?= $zodiac_char ?></div>
-
                     <h3><?= $month_num ?> 月</h3>
                     <div class="days-grid">
                         <div class="header-day">日</div>

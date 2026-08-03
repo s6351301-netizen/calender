@@ -355,14 +355,13 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
         /* 十二生肖霧化玻璃插圖浮水印設計 */
         .month-zodiac-art {
             position: absolute;
-            right: 0px;
-            width: 80px;
-            height: 80px;
-            top: -1px;
+            right: 330px;
+            width: 110px;
+            height: 110px;
             background: rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(107, 240, 94, 0.5);
+            border: 1px solid rgba(197, 234, 252, 0.5);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -540,12 +539,12 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
             }
 
             foreach ($display_calendar_data as $month_num => $days): 
-                // 依照月份對應四季：3-5月「春」、6-8月「夏」、9-11月「秋」、12、1、2月「冬」
-                if ($month_num >= 3 && $month_num <= 5) {
+                // 依照月份對應四季：1-3月「春」、4-6月「夏」、7-9月「秋」、10-12月「冬」
+                if ($month_num >= 1 && $month_num <= 3) {
                     $zodiac_char = '春';
-                } elseif ($month_num >= 6 && $month_num <= 8) {
+                } elseif ($month_num >= 4 && $month_num <= 6) {
                     $zodiac_char = '夏';
-                } elseif ($month_num >= 9 && $month_num <= 11) {
+                } elseif ($month_num >= 7 && $month_num <= 9) {
                     $zodiac_char = '秋';
                 } else {
                     $zodiac_char = '冬';

@@ -14,35 +14,19 @@ try {
     die("資料庫連線失敗: " . $e->getMessage());
 }
 
-// 1. 分別使用 5 個指定的 SQL 查詢指令，獨立讀取各朝代資料
-$stmt_song = $pdo->query("SELECT * FROM calendar_years_meta WHERE era_name LIKE '宋%'");
-$song_meta_raw = $stmt_song->fetchAll(PDO::FETCH_ASSOC);
-
-$stmt_yuan = $pdo->query("SELECT * FROM calendar_years_meta WHERE era_name LIKE '元%'");
-$yuan_meta_raw = $stmt_yuan->fetchAll(PDO::FETCH_ASSOC);
-
-$stmt_ming = $pdo->query("SELECT * FROM calendar_years_meta WHERE era_name LIKE '明%'");
-$ming_meta_raw = $stmt_ming->fetchAll(PDO::FETCH_ASSOC);
-
-$stmt_qing = $pdo->query("SELECT * FROM calendar_years_meta WHERE era_name LIKE '清%'");
-$qing_meta_raw = $stmt_qing->fetchAll(PDO::FETCH_ASSOC);
-
-$stmt_minguo = $pdo->query("SELECT * FROM calendar_years_meta WHERE era_name LIKE '民國%'");
-$minguo_meta_raw = $stmt_minguo->fetchAll(PDO::FETCH_ASSOC);
-
+// 1. 從 calendar_years_meta 讀取所有支援的年份與設定
+// （假設資料表欄位包含：year, minguo_year, emperor_era(皇帝/年號分類), era_name, ganzhi, theme, animal）
+$stmt = $pdo->query("SELECT * FROM calendar_years_meta ORDER BY year ASC");
+$years_meta_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $years_meta = [];
-$grouped_years = [
-    '宋代' => [],
-    '元代' => [],
-    '明代' => [],
-    '清代' => [],
-    '民國' => []
-];
+$grouped_years = [];
 
-// 處理宋代資料
-foreach ($song_meta_raw as $meta) {
+foreach ($years_meta_raw as $meta) {
     $year = $meta['year'];
-    $era = '宋代';
+    // 假設資料庫欄位有 'emperor_era' 代表所屬年號分類（例如：'民國', '明治', '大正', '昭和' 等）
+    // 若無此欄位，可根據您的資料結構調整判斷條件
+    $era = isset($meta['emperor_era']) ? $meta['emperor_era'] : '民國'; 
+
     $years_meta[$year] = [
         'minchu'   => $meta['minguo_year'],
         'era_name' => isset($meta['era_name']) ? $meta['era_name'] : '',
@@ -51,74 +35,15 @@ foreach ($song_meta_raw as $meta) {
         'animal'   => $meta['animal'],
         'era'      => $era
     ];
+
+    // 依照皇帝/年號分類歸納
     $grouped_years[$era][$year] = $years_meta[$year];
 }
 
-// 處理元代資料
-foreach ($yuan_meta_raw as $meta) {
-    $year = $meta['year'];
-    $era = '元代';
-    $years_meta[$year] = [
-        'minchu'   => $meta['minguo_year'],
-        'era_name' => isset($meta['era_name']) ? $meta['era_name'] : '',
-        'ganzhi'   => $meta['ganzhi'],
-        'theme'    => $meta['theme'],
-        'animal'   => $meta['animal'],
-        'era'      => $era
-    ];
-    $grouped_years[$era][$year] = $years_meta[$year];
-}
-
-// 處理明代資料
-foreach ($ming_meta_raw as $meta) {
-    $year = $meta['year'];
-    $era = '明代';
-    $years_meta[$year] = [
-        'minchu'   => $meta['minguo_year'],
-        'era_name' => isset($meta['era_name']) ? $meta['era_name'] : '',
-        'ganzhi'   => $meta['ganzhi'],
-        'theme'    => $meta['theme'],
-        'animal'   => $meta['animal'],
-        'era'      => $era
-    ];
-    $grouped_years[$era][$year] = $years_meta[$year];
-}
-
-// 處理清代資料
-foreach ($qing_meta_raw as $meta) {
-    $year = $meta['year'];
-    $era = '清代';
-    $years_meta[$year] = [
-        'minchu'   => $meta['minguo_year'],
-        'era_name' => isset($meta['era_name']) ? $meta['era_name'] : '',
-        'ganzhi'   => $meta['ganzhi'],
-        'theme'    => $meta['theme'],
-        'animal'   => $meta['animal'],
-        'era'      => $era
-    ];
-    $grouped_years[$era][$year] = $years_meta[$year];
-}
-
-// 處理民國資料
-foreach ($minguo_meta_raw as $meta) {
-    $year = $meta['year'];
-    $era = '民國';
-    $years_meta[$year] = [
-        'minchu'   => $meta['minguo_year'],
-        'era_name' => isset($meta['era_name']) ? $meta['era_name'] : '',
-        'ganzhi'   => $meta['ganzhi'],
-        'theme'    => $meta['theme'],
-        'animal'   => $meta['animal'],
-        'era'      => $era
-    ];
-    $grouped_years[$era][$year] = $years_meta[$year];
-}
-
-// 取得使用者透過下拉選單選擇的年份（預設為電腦系統的當前年份）
-$default_year = intval(date('Y'));
-$selected_year = isset($_GET['year']) ? intval($_GET['year']) : $default_year;
+// 取得使用者透過下拉選單選擇的年份（預設為 2026）
+$selected_year = isset($_GET['year']) ? intval($_GET['year']) : 2026;
 if (!array_key_exists($selected_year, $years_meta)) {
-    $selected_year = $default_year; // 若超出範圍則預設回當前年份
+    $selected_year = 2026; // 若超出範圍則預設回 2026
 }
 
 $meta = $years_meta[$selected_year];
@@ -190,17 +115,13 @@ for ($m = 1; $m <= 12; $m++) {
     }
     $calendar_data[$m] = $month_array;
 }
-
-// 取得電腦系統的當月份（1~12），若剛好為當前選定年份則對應顯示，否則預設顯示 1 月
-$current_system_month = (int)date('n');
-$default_display_month = ($selected_year === intval(date('Y'))) ? $current_system_month : 1;
 ?>
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台灣萬年曆黃曆 - 十二生肖霧化玻璃藝術版</title>
+    <title>台灣萬年曆黃曆 - 生肖浮水印藝術版</title>
     <style>
         /* 12 生肖專屬主題配色 */
         body.theme-rat { --main-color: #4B6584; --accent-color: #ff4757; --bg-color: #f1f2f6; }
@@ -270,7 +191,7 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
 
         .main-container {
             animation: pageEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            max-width: 900px;
+            max-width: 95%;
             margin: 0 auto;
         }
 
@@ -326,12 +247,12 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
         }
 
         .months-container {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
             gap: 25px;
             width: 100%;
             margin: 0 auto;
-            align-items: center;
+            align-items: start;
         }
 
         .month-box {
@@ -344,36 +265,10 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             box-sizing: border-box;
             width: 100%;
-            position: relative;
-            overflow: hidden;
         }
         .month-box:hover {
-            transform: translateY(-4px);
+            transform: translateY(-6px);
             box-shadow: 0 12px 25px rgba(0,0,0,0.12);
-        }
-
-        /* 十二生肖霧化玻璃插圖浮水印設計 */
-        .month-zodiac-art {
-            position: absolute;
-            right: 0px;
-            width: 80px;
-            height: 80px;
-            top: -1px;
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(107, 240, 94, 0.5);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3.2rem;
-            font-weight: bold;
-            color: var(--main-color);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
-            opacity: 0.85;
-            pointer-events: none;
-            z-index: 1;
         }
 
         .month-box h3 {
@@ -382,8 +277,6 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
             padding-bottom: 6px;
             color: var(--main-color);
             font-size: 1.6rem;
-            text-align: left;
-            padding-right: 130px;
             transition: color 0.5s ease, border-color 0.5s ease;
         }
 
@@ -469,22 +362,20 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
             background-color: #1f618d;
         }
 
-        /* 手機觀看響應式調整：單欄顯示、寬度 95% */
+        /* 手機觀看響應式調整：單欄顯示、寬度 95% 且格寬自動彈性調整 */
         @media screen and (max-width: 768px) {
             .main-container {
                 max-width: 95% !important;
                 width: 95% !important;
                 margin: 0 auto;
             }
-            .month-zodiac-art {
-                width: 75px;
-                height: 75px;
-                font-size: 2.2rem;
-                right: 12px;
-                top: 15px;
+            .months-container {
+                grid-template-columns: 1fr !important;
+                width: 100% !important;
             }
-            .month-box h3 {
-                padding-right: 90px;
+            .month-box {
+                width: 100% !important;
+                box-sizing: border-box;
             }
         }
     </style>
@@ -496,28 +387,23 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
     <div class="main-container">
         <h1>台灣萬年曆黃曆 - <?= $current_animal ?>年主題</h1>
         
-        <!-- 依照不同皇帝/年號動態產生 5 個獨立的下拉式選單 -->
+        <!-- 依照不同皇帝/年號動態產生多個分類下拉式選單 -->
         <div class="year-select-section">
-            
             <div>
                 <strong><?= $selected_year ?> 年 (<?= $minguo_year ?> <?= $era_name_val ?>)</strong> 
                 <span class="zodiac-badge">歲次 <?= $ganzhi_year ?></span>
             </div>
 
             <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
-                <?php foreach ($grouped_years as $era_name => $era_years): ?>
+                <?php foreach ($grouped_years as $era_name =>$era_years): ?>
                     <div class="era-dropdown-group">
-                        <span class="era-title"><?= htmlspecialchars($era_name) ?>：</span>
+                        <span class="era-title">年號：</span>
                         <select onchange="changeYear(this.value)">
-                            <?php if (empty($era_years)): ?>
-                                <option value="">(無資料)</option>
-                            <?php else: ?>
-                                <?php foreach ($era_years as $y => $m_data): ?>
-                                    <option value="<?= $y ?>" <?= ($y == $selected_year) ? 'selected' : '' ?>>
-                                        <?= $y ?> 年 (<?= $m_data['minchu'] ?><?= $m_data['era_name'] ?> - <?= $m_data['ganzhi'] ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
+                            <?php foreach ($era_years as $y =>$m_data): ?>
+                                <option value="<?= $y ?>" <?= ($y ==$selected_year) ? 'selected' : '' ?>>
+                                    <?= $y ?> 年 (<?= $m_data['minchu'] ?><?= $m_data['era_name'] ?> - <?=$m_data['ganzhi'] ?>)
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                 <?php endforeach; ?>
@@ -527,34 +413,8 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
         <hr style="width: 80%; border: 0; border-top: 1px solid rgba(0,0,0,0.15); margin: 25px auto;">
 
         <div class="months-container">
-            <?php
-            // 根據預設系統當月份調整迴圈順序，讓當月份排在第一位顯示
-            $month_keys = array_keys($calendar_data);
-            $target_index = array_search($default_display_month, $month_keys);
-            if ($target_index !== false) {
-                $slice1 = array_slice($calendar_data, $target_index, null, true);
-                $slice2 = array_slice($calendar_data, 0, $target_index, true);
-                $display_calendar_data = $slice1 + $slice2;
-            } else {
-                $display_calendar_data = $calendar_data;
-            }
-
-            foreach ($display_calendar_data as $month_num => $days): 
-                // 依照月份對應四季：3-5月「春」、6-8月「夏」、9-11月「秋」、12、1、2月「冬」
-                if ($month_num >= 3 && $month_num <= 5) {
-                    $zodiac_char = '春';
-                } elseif ($month_num >= 6 && $month_num <= 8) {
-                    $zodiac_char = '夏';
-                } elseif ($month_num >= 9 && $month_num <= 11) {
-                    $zodiac_char = '秋';
-                } else {
-                    $zodiac_char = '冬';
-                }
-            ?>
+            <?php foreach ($calendar_data as $month_num =>$days): ?>
                 <div class="month-box">
-                    <!-- 霧化玻璃效果的四季位置文字 -->
-                    <div class="month-zodiac-art" title="四季對應"><?= $zodiac_char ?></div>
-
                     <h3><?= $month_num ?> 月</h3>
                     <div class="days-grid">
                         <div class="header-day">日</div>
@@ -572,13 +432,11 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
                             echo '<div></div>';
                         }
 
-                        foreach ($days as $day_info) {
-                            $d = $day_info['day'];
-                            $lunar = $day_info['lunar'];
-                            $note = $day_info['note'];
-                            $events = $day_info['events'];
-                            $is_real_holiday = ($note !== '宜行事' && $note !== '星期六' && $note !== '星期日');
-                            $cell_style = $is_real_holiday ? 'background-color: rgba(255,0,0,0.03); border-color: var(--accent-color);' : '';
+                        foreach ($days as$day_info) {
+                            $d =$day_info['day'];
+                            $lunar =$day_info['lunar'];
+                            $note = $day_info['note'];$events = $day_info['events'];$is_real_holiday = ($note !== '宜行事' && $note !== '星期六' && $note !== '星期日');
+                            $cell_style =$is_real_holiday ? 'background-color: rgba(255,0,0,0.03); border-color: var(--accent-color);' : '';
                             
                             echo "<div class='day-cell' style='{$cell_style}'>";
                             echo "<span class='day-num'>{$d}</span>";
@@ -589,7 +447,7 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
                                 echo "<span class='{$note_class}' title='{$note}'>{$note}</span>";
                             }
 
-                            foreach ($events as $ev) {
+                            foreach ($events as$ev) {
                                 $tooltip = "【" . $ev['category'] . "】" . $ev['title'] . "\n詳細內容：" . $ev['content'];
                                 echo "<span class='event-badge' title='{$tooltip}' onclick=\"alert('{$tooltip}')\">" . htmlspecialchars($ev['title']) . "</span>";
                             }
@@ -605,9 +463,7 @@ $default_display_month = ($selected_year === intval(date('Y'))) ? $current_syste
 
     <script>
         function changeYear(year) {
-            if (year) {
-                window.location.href = "?year=" + year;
-            }
+            window.location.href = "?year=" + year;
         }
     </script>
 
